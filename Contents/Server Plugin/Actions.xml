@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<Actions>
+    <Action id="enableHotWater" deviceFilter="self.heatmiserThermostatWithHotWater">
+        <Name>Set Hot Water</Name>
+        <CallbackMethod>heatWater</CallbackMethod>
+		<ConfigUI>
+			<Field id="message" type="label">
+		        <Label>An action executed here may be overridden by the next scheduled hot water action as defined on the thermostat itself.</Label>
+		    </Field>
+			<Field type="menu" id="numberOfHours" defaultValue="01">
+				<Label>Choose an option:</Label>
+				<List>
+					<Option value="00">Off</Option>
+					<Option value="01">1 Hour</Option>
+					<Option value="02">2 Hours</Option>
+					<Option value="03">3 Hours</Option>
+					<Option value="04">4 Hours</Option>
+					<Option value="05">5 Hours</Option>
+					<Option value="06">6 Hours</Option>
+					<Option value="07">7 Hours</Option>
+					<Option value="08">8 Hours</Option>
+					<Option value="09">9 Hours</Option>
+					<Option value="10">10 Hours</Option>
+				</List>
+			</Field>
+		</ConfigUI>
+    </Action>
+</Actions>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+	Devices
+	Created by Kieran Broadfoot on 2013-09-05.
+	Copyright (c) 2013. All rights reserved.
+-->
+
+<Devices>
+	<Device type="thermostat" id="heatmiserThermostatWithHotWater">
+		<Name>Heatmiser Thermostat (with Hot Water)</Name>
+		<States>
+			<State id="hotWaterOn">
+				<ValueType>Boolean</ValueType>
+				<TriggerLabel>Hot Water On</TriggerLabel>
+				<ControlPageLabel>Hot Water Status</ControlPageLabel>
+			</State>
+			<State id="heatingOn">
+				<ValueType>Boolean</ValueType>
+				<TriggerLabel>Heating On</TriggerLabel>
+				<ControlPageLabel>Heating Status</ControlPageLabel>
+			</State>
+		</States>
+	</Device>
+
+	<Device type="thermostat" id="heatmiserThermostat">
+		<Name>Heatmiser Thermostat</Name>
+		<States>
+			<State id="heatingOn">
+				<ValueType>Boolean</ValueType>
+				<TriggerLabel>Heating On</TriggerLabel>
+				<ControlPageLabel>Heating Status</ControlPageLabel>
+			</State>
+		</States>
+	</Device>
+</Devices>

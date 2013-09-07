@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<PluginConfig>
+	<Field id="topLabel" type="label" fontSize="small" fontColor="darkgray">
+		<Label>Please provide the network location for your Heatmiser netmonitor (do not include the port). Please note this plugin does not need your username/password combination.  Ergo, I would advise against opening port 80 of your netmonitor to the outside world.</Label>
+	</Field>
+	<Field id="netmonitorLocation" type="textfield" defaultValue="192.168.0.1">
+		<Label>Netmonitor Location:</Label>
+	</Field>
+</PluginConfig>

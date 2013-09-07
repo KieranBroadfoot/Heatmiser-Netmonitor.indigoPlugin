@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<MenuItems>
+    <MenuItem id="accessNetmonitor">
+        <Name>Access Netmonitor</Name>
+        <CallbackMethod>accessNetmonitor</CallbackMethod>
+    </MenuItem>
+</MenuItems>
