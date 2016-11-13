@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>PluginVersion</key>
-	<string>0.0.1</string>
+	<string>1.0</string>
 	<key>ServerApiVersion</key>
-	<string>1.5</string>
+	<string>2.0</string>
 	<key>IwsApiVersion</key>
-	<string>1.0.0</string>
+	<string>1.0</string>
 	<key>CFBundleDisplayName</key>
 	<string>Heatmiser-Netmonitor</string>
 	<key>CFBundleIdentifier</key>
 	<string>uk.co.l1fe.indigoplugin.Heatmiser-Netmonitor</string>
 	<key>CFBundleVersion</key>
-	<string>0.0.1</string>
+	<string>1.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
