@@ -9,6 +9,7 @@ import os
 import re
 import httplib
 import urllib
+from time import strftime
 
 class Plugin(indigo.PluginBase):
 
@@ -59,12 +60,12 @@ class Plugin(indigo.PluginBase):
 			if device == None:
 				self.logger.info("creating heatmiser thermostat for %s" % devices[stat]['name'])
 				device = indigo.device.create(protocol=indigo.kProtocol.Plugin,
-			    	address=stat,
-			    	name=devices[stat]['name'], 
-			    	description=devices[stat]['desc'], 
-			    	pluginId="uk.co.l1fe.indigoplugin.Heatmiser-Netmonitor",
-			    	deviceTypeId=devices[stat]['type'],
-			    	props={})
+					address=stat,
+					name=devices[stat]['name'], 
+					description=devices[stat]['desc'], 
+					pluginId="uk.co.l1fe.indigoplugin.Heatmiser-Netmonitor",
+					deviceTypeId=devices[stat]['type'],
+					props={})
 			self.updateStatState(devices[stat], device)
 		
 	def collectStats(self):
@@ -145,6 +146,16 @@ class Plugin(indigo.PluginBase):
 	def accessNetmonitor(self):
 		self.browserOpen("http://"+self.netLocation)
 
+	def setTime(self, action, dev):
+		self.logger.info("updating heatmiser time")
+		params = {'rdbkck': '1', 'timestr':strftime("%H:%M")}
+		success, result = self.makeCallToNetmonitor("/networkSetup.htm", params)
+		
+	def setDate(self, action, dev):
+		self.logger.info("updating heatmiser date")
+		params = {'rdbkck': '1', 'datestr':strftime("%H:%M")}
+		success, result = self.makeCallToNetmonitor("/networkSetup.htm", params)
+		
 	def heatWater(self, action, device):
 		params = {'rdbkck': '1', 'curSelStat':self.fixStatName(device.name), 'hwBoost': action.props.get("numberOfHours")}
 		success, result = self.makeCallToNetmonitor("/right.htm", params)
