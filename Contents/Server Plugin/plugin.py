@@ -42,7 +42,7 @@ class Plugin(indigo.PluginBase):
 		self.logger.info("starting heatmiser-netmonitor monitoring thread")
 		try:
 			while True:
-				self.sleep(5 * 60)
+				self.sleep(60)
 				self.collectStats()
 				
 		except self.StopThread:
@@ -79,17 +79,19 @@ class Plugin(indigo.PluginBase):
 				self.updateStatState(devices[stat], device)
 				
 	def updateStatState(self, device, indigoDevice):
-			if device['type'] == "heatmiserThermostatWithHotWater":
-				if device['waterOn'] == "1":
-					indigoDevice.updateStateOnServer(key='hotWaterOn', value=True)
-				else:
-					indigoDevice.updateStateOnServer(key='hotWaterOn', value=False)
-			if device['heatingOn'] == "1":
-				indigoDevice.updateStateOnServer(key='heatingOn', value=True)
+		if device['type'] == "heatmiserThermostatWithHotWater":
+			if device['waterOn'] == "1":
+				indigoDevice.updateStateOnServer(key='hotWaterOn', value=True)
 			else:
-				indigoDevice.updateStateOnServer(key='heatingOn', value=False)
-			indigoDevice.updateStateOnServer("setpointHeat", device['setTemp'])
-			indigoDevice.updateStateOnServer("temperatureInput1", device['currentTemp'])
+				indigoDevice.updateStateOnServer(key='hotWaterOn', value=False)
+		if device['heatingOn'] == "1":
+			indigoDevice.updateStateOnServer(key='heatingOn', value=True)
+			indigoDevice.updateStateOnServer("hvacOperationMode", indigo.kHvacMode.Heat)
+		else:
+			indigoDevice.updateStateOnServer(key='heatingOn', value=False)
+			indigoDevice.updateStateOnServer("hvacOperationMode", indigo.kHvacMode.Off)
+		indigoDevice.updateStateOnServer("setpointHeat", device['setTemp'])
+		indigoDevice.updateStateOnServer("temperatureInput1", device['currentTemp'])
 		
 	def getDevices(self):
 		params = {'rdbkck': '1'}
@@ -137,11 +139,6 @@ class Plugin(indigo.PluginBase):
 		except Exception:
 			self.logger.warn("failed to communicate with netmonitor")
 			return False, ""
-	
-	def fixStatName(self, name):
-		name = name.replace(' ','+')
-		name = name.replace('/','%2F')
-		return name
 
 	def accessNetmonitor(self):
 		self.browserOpen("http://"+self.netLocation)
@@ -157,7 +154,7 @@ class Plugin(indigo.PluginBase):
 		success, result = self.makeCallToNetmonitor("/networkSetup.htm", params)
 		
 	def heatWater(self, action, device):
-		params = {'rdbkck': '1', 'curSelStat':self.fixStatName(device.name), 'hwBoost': action.props.get("numberOfHours")}
+		params = {'rdbkck': '1', 'curSelStat':device.name, 'hwBoost': action.props.get("numberOfHours")}
 		success, result = self.makeCallToNetmonitor("/right.htm", params)
 		if success:
 			hoursValue = action.props.get("numberOfHours").lstrip('0')
@@ -166,31 +163,51 @@ class Plugin(indigo.PluginBase):
 			else:
 				self.logger.info("heatmiser hot water thermostat \"%s\" set to run for %s hours" % (device.name, hoursValue))
 
+	def updateThermostatTemperature(self, thermostatName, setpoint):
+		params = { 'rdbkck':'1', 'selSetTemp':str(int(setpoint)), 'curSelStat':thermostatName }
+		success, data = self.makeCallToNetmonitor("/right.htm", params)
+		if success:
+			return True
+		else:
+			return False
+
 	def actionControlThermostat(self, action, dev):
 		if action.thermostatAction == indigo.kThermostatAction.SetHeatSetpoint:
 			newSetpoint = action.actionValue
-			params = { 'rdbkck':'1', 'selSetTemp':str(int(newSetpoint)), 'curSelStat':self.fixStatName(dev.name) }
-			success, data = self.makeCallToNetmonitor("/right.htm", params)
-			if success:
+			if self.updateThermostatTemperature(dev.name, newSetpoint):
 				dev.updateStateOnServer("setpointHeat", newSetpoint)
-				self.logger.info("heatmiser thermostat \"%s\" set to %s" % (dev.name, newSetpoint))
+				self.logger.info("heatmiser thermostat \"%s\" set heat point to %s" % (dev.name, newSetpoint))
 		elif action.thermostatAction == indigo.kThermostatAction.DecreaseHeatSetpoint:
 			newSetpoint = dev.heatSetpoint - action.actionValue
-			params = { 'rdbkck':'1', 'selSetTemp':str(int(newSetpoint)), 'curSelStat':self.fixStatName(dev.name) }
-			success, data = self.makeCallToNetmonitor("/right.htm", params)
-			if success:
+			if self.updateThermostatTemperature(dev.name, newSetpoint):
 				dev.updateStateOnServer("setpointHeat", newSetpoint)
-				self.logger.info("heatmiser thermostat \"%s\" decreased to %s" % (dev.name, newSetpoint))
+				self.logger.info("heatmiser thermostat \"%s\" decreased heat point to %s" % (dev.name, newSetpoint))
 		elif action.thermostatAction == indigo.kThermostatAction.IncreaseHeatSetpoint:
 			newSetpoint = dev.heatSetpoint + action.actionValue
-			params = { 'rdbkck':'1', 'selSetTemp':str(int(newSetpoint)), 'curSelStat':self.fixStatName(dev.name) }
-			success, data = self.makeCallToNetmonitor("/right.htm", params)
-			if success:
+			if self.updateThermostatTemperature(dev.name, newSetpoint):
 				dev.updateStateOnServer("setpointHeat", newSetpoint)
-				self.logger.info("heatmiser thermostat \"%s\" increased to %s" % (dev.name, newSetpoint))
+				self.logger.info("heatmiser thermostat \"%s\" increased heat point to %s" % (dev.name, newSetpoint))
+		elif action.thermostatAction == indigo.kThermostatAction.SetHvacMode:
+			if action.actionMode == 1:
+				dev.updateStateOnServer("hvacOperationMode", indigo.kHvacMode.Heat)
+				self.logger.info("heatmiser thermostat \"%s\" set to Heat" % (dev.name))
+				newSetpoint = dev.states["temperatureInput1"] + 2
+				if self.updateThermostatTemperature(dev.name, newSetpoint):
+					dev.updateStateOnServer("setpointHeat", newSetpoint)
+					self.logger.info("heatmiser thermostat \"%s\" set heat point to %s" % (dev.name, newSetpoint))
+			elif action.actionMode == 0 or action.actionMode == 2:
+				dev.updateStateOnServer("hvacOperationMode", indigo.kHvacMode.Off)
+				self.logger.info("heatmiser thermostat \"%s\" set to Off" % (dev.name))
+				if self.updateThermostatTemperature(dev.name, 10):
+					dev.updateStateOnServer("setpointHeat", 10)
+					self.logger.info("heatmiser thermostat \"%s\" set heat point to %s" % (dev.name, 10))
+			else:
+				self.logger.info("heatmiser thermostat \"%s\" set to current program mode" % (dev.name))
 		elif action.thermostatAction in [indigo.kThermostatAction.RequestStatusAll, indigo.kThermostatAction.RequestMode,
 			indigo.kThermostatAction.RequestEquipmentState, indigo.kThermostatAction.RequestTemperatures, indigo.kThermostatAction.RequestHumidities,
 			indigo.kThermostatAction.RequestDeadbands, indigo.kThermostatAction.RequestSetpoints]:
-			self.logger.warn("Status automatically updated every 5 minutes")
+			self.logger.warn("status automatically updated every 1 minute")
+		elif action.thermostatAction in [indigo.kThermostatAction.DecreaseCoolSetpoint, indigo.kThermostatAction.IncreaseCoolSetpoint, indigo.kThermostatAction.SetCoolSetpoint]:
+			self.logger.warn("heatmiser thermostats do not support cooling functions")
 		else:
-			self.logger.warn("Actions on Heatmiser thermostats not currently supported")
+			self.logger.warn("heatmiser action \"%s\" not currently supported" % (action.thermostatAction))
